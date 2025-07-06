@@ -1180,11 +1180,16 @@ dependencies = [
  "eyre",
  "libp2p",
  "thiserror",
+ "vc-types",
 ]
 
 [[package]]
 name = "vc-types"
 version = "0.1.0"
+dependencies = [
+ "libp2p",
+ "thiserror",
+]
 
 [[package]]
 name = "version_check"

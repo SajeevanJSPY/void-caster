@@ -1,0 +1,12 @@
+[package]
+name = "vc-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+vc-types.workspace = true
+
+libp2p = { workspace = true, features = ["ed25519"] }
+thiserror.workspace = true
+eyre.workspace = true
+
