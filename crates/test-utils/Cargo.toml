@@ -1,0 +1,8 @@
+[package]
+name = "vc-test-utils"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+

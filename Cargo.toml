@@ -9,7 +9,10 @@ members = [
 	"crates/core",
 
 	# network
-	"crates/network/p2p"
+	"crates/network/p2p",
+
+	# tests
+	"crates/test-utils",
 ]
 
 [workspace.package]
@@ -22,6 +25,9 @@ edition = "2024"
 vc-types = { path = "crates/types" }
 vc-core = { path = "crates/core" }
 vc-p2p = { path = "crates/network/p2p" }
+
+# tests related
+vc-test-utils = { path = "crates/test-utils" }
 
 # consensus
 tendermint-proto = "0.40.0"
