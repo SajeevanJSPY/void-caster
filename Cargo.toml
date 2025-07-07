@@ -7,6 +7,9 @@ members = [
 	# core
 	"crates/types",
 	"crates/core",
+
+	# network
+	"crates/network/p2p"
 ]
 
 [workspace.package]
@@ -18,7 +21,7 @@ edition = "2024"
 # void caster
 vc-types = { path = "crates/types" }
 vc-core = { path = "crates/core" }
-
+vc-p2p = { path = "crates/network/p2p" }
 
 # consensus
 tendermint-proto = "0.40.0"
