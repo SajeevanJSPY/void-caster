@@ -1,4 +1,24 @@
+use serde::{Deserialize, Serialize};
 use vc_types::crypto::{CryptoError, Keypair, PeerId, PublicKey};
+
+#[derive(Debug, Hash, PartialEq, Default, Eq, Clone, Ord, PartialOrd, Serialize, Deserialize)]
+pub struct Digest(pub [u8; 32]);
+
+impl Digest {
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.0.to_vec()
+    }
+
+    pub fn size(&self) -> usize {
+        self.0.len()
+    }
+}
+
+impl AsRef<[u8]> for Digest {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
 
 pub struct NodeId {
     keypair: Keypair,
@@ -30,4 +50,35 @@ impl NodeId {
     pub fn peer_id(&self) -> PeerId {
         PeerId::from_public_key(&self.public_key().into())
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug)]
+pub struct Signature {
+    part1: [u8; 32],
+    part2: [u8; 32],
+}
+
+impl Signature {
+    pub fn new(digest: &Digest, keypair: &Keypair) -> Self {
+        let sig = keypair.sign(&digest.0);
+        let part1 = sig[..32].try_into().expect("Unexpected signature length");
+        let part2 = sig[32..64].try_into().expect("Unexpected signature length");
+        Self { part1, part2 }
+    }
+
+    fn flatten(&self) -> [u8; 64] {
+        [self.part1, self.part2]
+            .concat()
+            .try_into()
+            .expect("Unexpected signature length")
+    }
+
+    fn verify(&self, digest: &Digest, public_key: &PublicKey) -> Result<bool, CryptoError> {
+        let signature = self.flatten().clone();
+        Ok(public_key.verify(&digest.0, &signature))
+    }
+}
+
+pub trait Hash {
+    fn digest(&self) -> Digest;
 }

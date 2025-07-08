@@ -3168,20 +3168,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
 
 [[package]]
-name = "vc-bullshark"
-version = "0.0.1"
-dependencies = [
- "serde",
- "vc-core",
- "vc-types",
-]
-
-[[package]]
 name = "vc-core"
 version = "0.1.0"
 dependencies = [
  "eyre",
  "libp2p",
+ "serde",
  "thiserror 2.0.12",
  "vc-types",
 ]
