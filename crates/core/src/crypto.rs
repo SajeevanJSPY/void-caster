@@ -66,14 +66,14 @@ impl Signature {
         Self { part1, part2 }
     }
 
-    fn flatten(&self) -> [u8; 64] {
+    pub fn flatten(&self) -> [u8; 64] {
         [self.part1, self.part2]
             .concat()
             .try_into()
             .expect("Unexpected signature length")
     }
 
-    fn verify(&self, digest: &Digest, public_key: &PublicKey) -> Result<bool, CryptoError> {
+    pub fn verify(&self, digest: &Digest, public_key: &PublicKey) -> Result<bool, CryptoError> {
         let signature = self.flatten().clone();
         Ok(public_key.verify(&digest.0, &signature))
     }
