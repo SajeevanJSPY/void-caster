@@ -1,0 +1,15 @@
+[package]
+name = "vc-tendermint"
+version = "0.0.1"
+edition.workspace = true
+
+[dependencies]
+vc-core.workspace = true
+
+tendermint-proto.workspace = true
+tokio = { workspace = true, features = ["full"] }
+thiserror.workspace = true
+eyre.workspace = true
+tracing.workspace = true
+prost.workspace = true
+bytes.workspace = true
