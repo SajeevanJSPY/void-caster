@@ -3283,6 +3283,7 @@ dependencies = [
  "tokio",
  "tracing",
  "vc-core",
+ "vc-types",
 ]
 
 [[package]]
