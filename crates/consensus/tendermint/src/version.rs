@@ -1,4 +1,4 @@
-use tendermint_proto::{state::Version as TmVersion, version::Consensus};
+use void_proto::tendermint::{state::Version as TmVersion, version::Consensus};
 
 const APP_VERSION: &str = "void-caster:0.0.1";
 const BLOCK_PROTOCOL: u64 = 11;

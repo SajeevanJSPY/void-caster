@@ -1,4 +1,4 @@
-use tendermint_proto::types::{Validator, ValidatorSet};
+use void_proto::tendermint::types::{Validator, ValidatorSet};
 
 use vc_types::crypto::{Keypair, PublicKey};
 
@@ -36,8 +36,8 @@ impl Committee {
         let hash = hasher.finish();
         let address = hash.to_be_bytes().to_vec();
 
-        let pub_key = tendermint_proto::crypto::PublicKey {
-            sum: Some(tendermint_proto::crypto::public_key::Sum::Ed25519(
+        let pub_key = void_proto::tendermint::crypto::PublicKey {
+            sum: Some(void_proto::tendermint::crypto::public_key::Sum::Ed25519(
                 pub_key.to_bytes().to_vec(),
             )),
         };

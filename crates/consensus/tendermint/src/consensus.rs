@@ -1,9 +1,9 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use tendermint_proto::consensus::Message as ConsensusMessage;
-use tendermint_proto::google::protobuf::Timestamp;
-use tendermint_proto::mempool::Message as MempoolMessage;
-use tendermint_proto::{
+use void_proto::google::Timestamp;
+use void_proto::tendermint::consensus::Message as ConsensusMessage;
+use void_proto::tendermint::mempool::Message as MempoolMessage;
+use void_proto::tendermint::{
     state::{State as TmState, Version},
     types::Validator,
 };
@@ -59,8 +59,8 @@ impl Consensus {
             );
 
             self.broadcast(ConsensusMessage {
-                sum: Some(tendermint_proto::consensus::message::Sum::Proposal(
-                    tendermint_proto::consensus::Proposal { proposal: None },
+                sum: Some(void_proto::tendermint::consensus::message::Sum::Proposal(
+                    void_proto::tendermint::consensus::Proposal { proposal: None },
                 )),
             });
         } else {
@@ -86,16 +86,16 @@ impl Consensus {
             );
             let consensus_message = ConsensusMessage {
                 // TODO: change the None value to the valid Vote type
-                sum: Some(tendermint_proto::consensus::message::Sum::Vote(
-                    tendermint_proto::consensus::Vote { vote: None },
+                sum: Some(void_proto::tendermint::consensus::message::Sum::Vote(
+                    void_proto::tendermint::consensus::Vote { vote: None },
                 )),
             };
 
             self.broadcast(consensus_message);
         } else {
             let consensus_message = ConsensusMessage {
-                sum: Some(tendermint_proto::consensus::message::Sum::Vote(
-                    tendermint_proto::consensus::Vote { vote: None },
+                sum: Some(void_proto::tendermint::consensus::message::Sum::Vote(
+                    void_proto::tendermint::consensus::Vote { vote: None },
                 )),
             };
 

@@ -7,7 +7,7 @@ edition.workspace = true
 vc-core.workspace = true
 vc-types.workspace = true
 
-tendermint-proto.workspace = true
+void-proto.workspace = true
 tokio = { workspace = true, features = ["full"] }
 thiserror.workspace = true
 eyre.workspace = true
