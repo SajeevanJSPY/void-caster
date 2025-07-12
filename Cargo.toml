@@ -9,7 +9,7 @@ members = [
 	"crates/core",
 
 	# consensus
-	"crates/consensus/tendermint",
+	"crates/consensus/bullshark",
 
 	# network
 	"crates/network/p2p",

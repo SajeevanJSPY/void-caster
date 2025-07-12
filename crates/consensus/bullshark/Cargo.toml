@@ -1,0 +1,14 @@
+[package]
+name = "vc-bullshark"
+version = "0.0.1"
+edition.workspace = true
+
+[dependencies]
+vc-types.workspace = true
+vc-core.workspace = true
+vc-test-utils.workspace = true
+
+tokio = { workspace = true, features = ["full"] }
+serde.workspace = true
+tracing.workspace = true
+sha2.workspace = true
