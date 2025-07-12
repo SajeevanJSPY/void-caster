@@ -1,3 +1,7 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use tendermint_proto::consensus::Message as ConsensusMessage;
+use tendermint_proto::google::protobuf::Timestamp;
 use tendermint_proto::mempool::Message as MempoolMessage;
 use tendermint_proto::{
     state::{State as TmState, Version},
@@ -7,7 +11,7 @@ use tendermint_proto::{
 use crate::messages::Message;
 use crate::{
     state::{Block, ConsensusState, Step},
-    types::Round,
+    types::{Height, Round},
 };
 
 const CHAIN_ID: &str = "void-caster";
@@ -24,6 +28,15 @@ impl Consensus {
     pub async fn run(&mut self) {
         // start the first round for the first height
         self.start_round(0).await;
+
+        // upon rules
+        let value = Block::new();
+        self.on_proposing_proposal(
+            self.state.get_current_height(),
+            self.state.get_current_round(),
+            value,
+            self.state.get_valid_round(),
+        );
     }
 
     /// start the round for the new height
@@ -33,26 +46,99 @@ impl Consensus {
         self.state.set_current_step(Step::Propose);
 
         // if the node chosen to propose the value
-        if self.get_round_proposer(r) == self.authority {
+        if self.get_round_proposer(
+            self.state.get_current_height(),
+            self.state.get_current_round(),
+        ) == self.authority
+        {
             let proposal = self.state.get_valid_value().unwrap_or(self.get_value());
-
-            self.broadcast(Message::proposal(
+            let propose_message = Message::proposal(
                 self.state.get_current_height(),
                 self.state.get_current_round(),
                 -1,
-            ));
+            );
+
+            self.broadcast(ConsensusMessage {
+                sum: Some(tendermint_proto::consensus::message::Sum::Proposal(
+                    tendermint_proto::consensus::Proposal { proposal: None },
+                )),
+            });
+        } else {
+            // the on_timeout_propose should be called after the timeout ended
+            tokio::time::timeout(self.timeout_propose(), self.on_timeout_propose());
         }
     }
 
-    fn broadcast(&self, m: Message) {}
+    fn on_proposing_proposal(&self, h: Height, r: Round, value: Block, valid_round: Option<Round>) {
+        // NOTE: these two validation checks should be performed before this function is called
+        assert!(valid_round == None);
+        assert!(self.state.get_current_step() == Step::Propose);
+
+        if self.verify_value(&value)
+            && (self.state.get_locked_round().is_none()
+                || self.state.get_locked_value().unwrap() == value)
+        {
+            let vote = Message::vote(
+                self.state.get_current_height(),
+                self.state.get_current_round(),
+                Self::now(),
+                self.authority.address.clone(),
+            );
+            let consensus_message = ConsensusMessage {
+                // TODO: change the None value to the valid Vote type
+                sum: Some(tendermint_proto::consensus::message::Sum::Vote(
+                    tendermint_proto::consensus::Vote { vote: None },
+                )),
+            };
+
+            self.broadcast(consensus_message);
+        } else {
+            let consensus_message = ConsensusMessage {
+                sum: Some(tendermint_proto::consensus::message::Sum::Vote(
+                    tendermint_proto::consensus::Vote { vote: None },
+                )),
+            };
+
+            self.broadcast(consensus_message);
+        }
+    }
+
+    fn now() -> Timestamp {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+
+        Timestamp {
+            seconds: now.as_secs() as i64,
+            nanos: now.subsec_nanos() as i32,
+        }
+    }
+
+    // get the proposer for the current height and the round
+    fn proposer(&self, h: Height, r: Round) -> Validator {
+        todo!()
+    }
+
+    fn verify_value(&self, value: &Block) -> bool {
+        true
+    }
+
+    /// send the message via p2p
+    fn broadcast(&self, m: ConsensusMessage) {}
 
     fn get_value(&self) -> Block {
         todo!()
     }
 
     /// get the Proposer for the current round
-    fn get_round_proposer(&self, r: Round) -> Validator {
+    fn get_round_proposer(&self, h: Height, r: Round) -> Validator {
         todo!()
+    }
+
+    async fn on_timeout_propose(&self) {}
+
+    fn timeout_propose(&self) -> Duration {
+        Duration::from_secs(1)
     }
 }
 
