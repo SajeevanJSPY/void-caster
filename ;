@@ -45,15 +45,20 @@ impl Consensus {
         self.state.set_current_round(r);
         self.state.set_current_step(Step::Propose);
 
-        let current_height = self.state.get_current_height();
-        let current_round = self.state.get_current_round();
-
         // if the node chosen to propose the value
-        if self.get_round_proposer(current_height, current_round) == self.authority {
-            let proposal_value = self.state.get_valid_value().unwrap_or(self.get_value());
-            let proposal = Message::proposal(current_height, current_round, -1);
+        if self.get_round_proposer(
+            self.state.get_current_height(),
+            self.state.get_current_round(),
+        ) == self.authority
+        {
+            let proposal = self.state.get_valid_value().unwrap_or(self.get_value());
+            let propose_message = Message::proposal(
+                self.state.get_current_height(),
+                self.state.get_current_round(),
+                -1,
+            );
 
-            self.broadcast(proposal.inner());
+            self.broadcast(propose_message.inner());
         } else {
             // the on_timeout_propose should be called after the timeout ended
             tokio::time::timeout(self.timeout_propose(), self.on_timeout_propose());
@@ -75,10 +80,22 @@ impl Consensus {
                 Self::now(),
                 self.authority.address.clone(),
             );
+            let consensus_message = ConsensusMessage {
+                // TODO: change the None value to the valid Vote type
+                sum: Some(void_proto::tendermint::consensus::message::Sum::Vote(
+                    void_proto::tendermint::consensus::Vote { vote: None },
+                )),
+            };
 
             self.broadcast(vote.inner());
         } else {
-            self.broadcast(Message::vote_not_valid().inner());
+            let consensus_message = ConsensusMessage {
+                sum: Some(void_proto::tendermint::consensus::message::Sum::Vote(
+                    void_proto::tendermint::consensus::Vote { vote: None },
+                )),
+            };
+
+            self.broadcast(consensus_message);
         }
     }
 

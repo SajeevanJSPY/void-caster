@@ -14,6 +14,10 @@ impl Message {
         self.0.encode_to_vec()
     }
 
+    pub fn inner(self) -> TmMessage {
+        self.0
+    }
+
     pub fn proposal(height: Height, round: Round, pol_round: Round) -> Self {
         let proposal = void_proto::tendermint::types::Proposal {
             r#type: void_proto::tendermint::types::SignedMsgType::Proposal as i32,
@@ -25,9 +29,11 @@ impl Message {
         };
 
         Self(TmMessage {
-            sum: Some(Messages::Proposal(void_proto::tendermint::consensus::Proposal {
-                proposal: Some(proposal),
-            })),
+            sum: Some(Messages::Proposal(
+                void_proto::tendermint::consensus::Proposal {
+                    proposal: Some(proposal),
+                },
+            )),
         })
     }
 
@@ -62,6 +68,14 @@ impl Message {
         Self(TmMessage {
             sum: Some(Messages::Vote(void_proto::tendermint::consensus::Vote {
                 vote: Some(vote),
+            })),
+        })
+    }
+
+    pub fn vote_not_valid() -> Self {
+        Self(TmMessage {
+            sum: Some(Messages::Vote(void_proto::tendermint::consensus::Vote {
+                vote: None,
             })),
         })
     }
