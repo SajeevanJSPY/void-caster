@@ -7,3 +7,4 @@ pub mod messages;
 pub mod state;
 pub mod types;
 pub mod version;
+pub mod vote;
