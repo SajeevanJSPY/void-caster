@@ -1,11 +1,13 @@
-use void_proto::tendermint::types::{Validator, ValidatorSet};
-
-use vc_types::crypto::{Keypair, PublicKey};
-
-use core::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use std::sync::{Arc, Mutex};
 
+use sha3::{Digest, Keccak256};
+
+use vc_types::crypto::{Keypair, PublicKey};
+use void_proto::tendermint::types::{Validator, ValidatorSet};
+
+#[derive(Debug)]
 pub struct Committee(Arc<Mutex<ValidatorSet>>);
 
 impl Committee {
@@ -32,10 +34,11 @@ impl Committee {
     }
 
     fn validator(pub_key: &PublicKey, voting_power: i64) -> Validator {
-        let mut hasher = DefaultHasher::new();
-        pub_key.hash(&mut hasher);
-        let hash = hasher.finish();
-        let address = hash.to_be_bytes().to_vec();
+        let hash = Keccak256::digest(pub_key.to_bytes().as_slice());
+        // TODO: change the type with the [void_proto::void_proto::types::Address]
+        //      also change in the proto definitions
+        let mut address = [0u8; 20];
+        address.copy_from_slice(&hash[12..]);
 
         let pub_key = void_proto::tendermint::crypto::PublicKey {
             sum: Some(void_proto::tendermint::crypto::public_key::Sum::Ed25519(
@@ -44,7 +47,7 @@ impl Committee {
         };
 
         Validator {
-            address,
+            address: address.to_vec(),
             pub_key: Some(pub_key),
             voting_power,
             proposer_priority: 0,
@@ -78,5 +81,20 @@ impl Committee {
         }
 
         Self::genesis(validators.into_iter())
+    }
+}
+
+#[cfg(test)]
+mod committee_tests {
+    use super::*;
+
+    #[test]
+    fn test_total_power_calculation() {
+        const DEFAULT_VOTING_POWER: i64 = 100000;
+        // random commitee
+        // each validator have DEFAULT_VOTING_POWER
+        let committee = Committee::random_committee(3);
+
+        assert_eq!(committee.total_voting_power(), 3 * DEFAULT_VOTING_POWER);
     }
 }
