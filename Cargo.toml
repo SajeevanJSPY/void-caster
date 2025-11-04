@@ -8,9 +8,6 @@ members = [
 	"crates/types",
 	"crates/core",
 
-	# consensus
-	"crates/consensus/tendermint",
-
 	# network
 	"crates/network/p2p",
 
@@ -36,6 +33,7 @@ vc-test-utils = { path = "crates/test-utils" }
 void-proto = { git = "https://github.com/sajeevanjspy/void-proto.git" }
 
 # tendermint
+# network
 libp2p = { version = "0.56.0", default-features = false }
 
 # runtime (async)
