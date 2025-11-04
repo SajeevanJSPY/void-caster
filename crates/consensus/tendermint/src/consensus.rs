@@ -1,0 +1,141 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use void_proto::google::Timestamp;
+use void_proto::tendermint::consensus::Message as ConsensusMessage;
+use void_proto::tendermint::mempool::Message as MempoolMessage;
+use void_proto::tendermint::{
+    state::{State as TmState, Version},
+    types::Validator,
+};
+
+use crate::messages::Message;
+use crate::{
+    state::{Block, ConsensusState, Step},
+    types::{Height, Round},
+};
+
+const CHAIN_ID: &str = "void-caster";
+
+#[derive(Debug)]
+pub struct Consensus {
+    pub authority: Validator,
+    pub state: ConsensusState,
+    pub meta_state: State,
+    pub mempool: MempoolMessage,
+}
+
+impl Consensus {
+    pub async fn run(&mut self) {
+        // start the first round for the first height
+        self.start_round(0).await;
+
+        // upon rules
+        let value = Block::new();
+        self.on_proposing_proposal(
+            self.state.get_current_height(),
+            self.state.get_current_round(),
+            value,
+            self.state.get_valid_round(),
+        );
+    }
+
+    /// start the round for the new height
+    async fn start_round(&mut self, r: Round) {
+        // set the current round and step for the new height
+        self.state.set_current_round(r);
+        self.state.set_current_step(Step::Propose);
+
+        let current_height = self.state.get_current_height();
+        let current_round = self.state.get_current_round();
+
+        // if the node chosen to propose the value
+        if self.get_round_proposer(current_height, current_round) == self.authority {
+            let proposal_value = self.state.get_valid_value().unwrap_or(self.get_value());
+            let proposal = Message::proposal(current_height, current_round, -1);
+
+            self.broadcast(proposal.inner());
+        } else {
+            // the on_timeout_propose should be called after the timeout ended
+            tokio::time::timeout(self.timeout_propose(), self.on_timeout_propose());
+        }
+    }
+
+    fn on_proposing_proposal(&self, h: Height, r: Round, value: Block, valid_round: Option<Round>) {
+        // NOTE: these two validation checks should be performed before this function is called
+        assert!(valid_round == None);
+        assert!(self.state.get_current_step() == Step::Propose);
+
+        if self.verify_value(&value)
+            && (self.state.get_locked_round().is_none()
+                || self.state.get_locked_value().unwrap() == value)
+        {
+            let vote = Message::vote(
+                self.state.get_current_height(),
+                self.state.get_current_round(),
+                Self::now(),
+                self.authority.address.clone(),
+            );
+
+            self.broadcast(vote.inner());
+        } else {
+            self.broadcast(Message::vote_not_valid().inner());
+        }
+    }
+
+    fn now() -> Timestamp {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+
+        Timestamp {
+            seconds: now.as_secs() as i64,
+            nanos: now.subsec_nanos() as i32,
+        }
+    }
+
+    // get the proposer for the current height and the round
+    fn proposer(&self, h: Height, r: Round) -> Validator {
+        todo!()
+    }
+
+    fn verify_value(&self, value: &Block) -> bool {
+        true
+    }
+
+    /// send the message via p2p
+    fn broadcast(&self, m: ConsensusMessage) {}
+
+    fn get_value(&self) -> Block {
+        todo!()
+    }
+
+    /// get the Proposer for the current round
+    fn get_round_proposer(&self, h: Height, r: Round) -> Validator {
+        todo!()
+    }
+
+    async fn on_timeout_propose(&self) {}
+
+    fn timeout_propose(&self) -> Duration {
+        Duration::from_secs(1)
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct State(pub TmState);
+
+impl State {
+    pub fn new() -> Self {
+        let state = TmState {
+            version: Some(Version {
+                software: "void-caster".to_string(),
+                consensus: None,
+            }),
+            chain_id: CHAIN_ID.to_string(),
+            initial_height: 0,
+            ..Default::default()
+        };
+
+        Self(state)
+    }
+}
